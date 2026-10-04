@@ -89,10 +89,13 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.72rem;
-  color: var(--muted);
+}
+
+.brand-logo {
+  display: block;
+  width: clamp(160px, 20vw, 220px);
+  height: auto;
+  filter: drop-shadow(0 14px 18px rgba(92, 105, 255, 0.18));
 }
 
 .brand-mark {

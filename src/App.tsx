@@ -355,8 +355,7 @@ function App() {
       />
       <header className="topbar" aria-label="Cabeçalho do site">
         <div className="brand" aria-label="Marca do projeto">
-          <span className="brand-mark">TSE</span>
-          <span className="brand-copy">Resultados</span>
+          <img src="/logo.svg" alt="Logo do site de apuração" className="brand-logo" />
         </div>
         <a className="source-link" href={election.sourceUrl} target="_blank" rel="noreferrer">
           Fonte: {election.sourceLabel}
