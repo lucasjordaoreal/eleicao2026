@@ -325,7 +325,7 @@ function App() {
     }
 
     void refreshResults()
-    const timer = window.setInterval(refreshResults, 15_000)
+    const timer = window.setInterval(refreshResults, 5_000)
     document.addEventListener('visibilitychange', refreshWhenVisible)
 
     return () => {
