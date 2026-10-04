@@ -1,32 +1,21 @@
-# React + TypeScript + Vite
+# Apura | Eleições 2026
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Painel estático de resultados oficiais da eleição presidencial de 2026.
 
-Currently, two official plugins are available:
+## Desenvolvimento
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+npm ci
+npm run update:election-data
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+`npm run update:election-data` busca o arquivo oficial do TSE, verifica a assinatura Ed25519 e atualiza `public/election-results.json`. O build falha se a resposta não for válida ou a assinatura não corresponder.
+
+## Publicação
+
+O workflow em `.github/workflows/deploy.yml` compila e publica o site no GitHub Pages quando há push para `main`. Ele também busca e publica um novo snapshot oficial a cada cinco minutos. A página recarrega o snapshot publicado a cada minuto enquanto estiver aberta.
+
+O navegador não consulta o TSE diretamente porque o endpoint oficial não permite requisições CORS de outros sites. Por isso, a atualização depende do workflow agendado do GitHub Actions e pode atrasar se o Actions estiver indisponível ou atrasar a execução.
+
+No repositório, configure **Settings → Pages → Build and deployment → Source → GitHub Actions**. Para este projeto, o caminho do Pages está configurado como `/eleicao2026/`.

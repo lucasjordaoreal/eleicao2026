@@ -14,7 +14,7 @@ import {
   type ElectionRound,
   type ElectionTimelapseData,
 } from './data/electionData'
-import { getElectionSnapshot } from './services/electionService'
+import { getElectionSnapshot, loadElectionSnapshot } from './services/electionService'
 
 const featuredCandidateOrder = new Map([
   ['RENAN SANTOS', 0],
@@ -288,8 +288,9 @@ function ElectionTimelapse({
 }
 
 function App() {
-  const election = getElectionSnapshot()
+  const [election, setElection] = useState(getElectionSnapshot)
   const [status, setStatus] = useState<'loading' | 'ready' | 'unavailable' | 'error'>('loading')
+  const [retryToken, setRetryToken] = useState(0)
   const [isTimelapsePage, setIsTimelapsePage] = useState(
     () => window.location.hash === '#/timelapse',
   )
@@ -298,17 +299,35 @@ function App() {
   const pageProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, mass: 0.3 })
 
   useEffect(() => {
-    const control = window.setTimeout(() => {
-      if (election.dataAvailable) {
+    const controller = new AbortController()
+    let requestInProgress = false
+
+    const refreshResults = async () => {
+      if (requestInProgress) return
+      requestInProgress = true
+
+      try {
+        const snapshot = await loadElectionSnapshot(controller.signal)
+        setElection(snapshot)
         setStatus('ready')
-        return
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error('Falha ao atualizar os resultados oficiais.', error)
+          setStatus('error')
+        }
+      } finally {
+        requestInProgress = false
       }
+    }
 
-      setStatus('unavailable')
-    }, 650)
+    void refreshResults()
+    const timer = window.setInterval(refreshResults, 60_000)
 
-    return () => window.clearTimeout(control)
-  }, [election.dataAvailable])
+    return () => {
+      controller.abort()
+      window.clearInterval(timer)
+    }
+  }, [retryToken])
 
   useEffect(() => {
     const updatePage = () => {
@@ -341,9 +360,7 @@ function App() {
 
   const retryLoad = () => {
     setStatus('loading')
-    window.setTimeout(() => {
-      setStatus(election.dataAvailable ? 'ready' : 'unavailable')
-    }, 500)
+    setRetryToken((current) => current + 1)
   }
 
   return (
@@ -395,10 +412,16 @@ function App() {
             >
               <div className="status-row">
                 <span className="status-label">Status da apuração</span>
-                <span className={`status-badge ${election.dataAvailable ? 'live' : 'idle'}`}>
+                <span
+                  className={`status-badge ${
+                    status === 'error' ? 'idle' : election.dataAvailable ? 'live' : 'idle'
+                  }`}
+                >
                   {status === 'loading'
                     ? 'CARREGANDO'
-                    : election.dataAvailable
+                    : status === 'error'
+                      ? 'ERRO'
+                      : election.dataAvailable
                       ? 'AO VIVO'
                       : 'AGUARDANDO'}
                 </span>
@@ -431,11 +454,15 @@ function App() {
                 </div>
                 <div>
                   <span>Última atualização</span>
-                  <strong>{new Date(election.lastUpdated).toLocaleString('pt-BR')}</strong>
+                  <strong>
+                    {election.lastUpdated
+                      ? new Date(election.lastUpdated).toLocaleString('pt-BR')
+                      : '—'}
+                  </strong>
                 </div>
                 <div>
                   <span>Eleitorado apto</span>
-                  <strong>{formatNumber(158745502)}</strong>
+                  <strong>{formatNumber(election.eligibleVoters)}</strong>
                 </div>
               </div>
             </motion.aside>
