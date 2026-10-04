@@ -470,7 +470,6 @@ function App() {
         </section>
 
         <a className="timelapse-entry" href="#/timelapse">
-          <span className="timelapse-entry-icon" aria-hidden="true">↗</span>
           <span className="timelapse-entry-copy">
             <span className="section-kicker">Explore a apuração</span>
             <strong>Linha do tempo oficial</strong>
