@@ -355,7 +355,7 @@ function App() {
       />
       <header className="topbar" aria-label="Cabeçalho do site">
         <div className="brand" aria-label="Marca do projeto">
-          <img src="/logo.svg" alt="Logo do site de apuração" className="brand-logo" />
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo do site de apuração" className="brand-logo" />
         </div>
         <a className="source-link" href={election.sourceUrl} target="_blank" rel="noreferrer">
           Fonte: {election.sourceLabel}
