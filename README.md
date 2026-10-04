@@ -20,7 +20,9 @@ O workflow em `.github/workflows/deploy.yml` compila e publica o site no GitHub 
 
 Quando configurado, um Supabase Edge Function busca e valida a resposta assinada do TSE uma vez por minuto, salva o snapshot no banco e a página consulta esse snapshot sem precisar republicar o site. A atualização ainda depende do intervalo em que o TSE publica novos dados.
 
-1. Crie um projeto Supabase e aplique `supabase/migrations/20261004000000_election_results.sql` pelo SQL Editor ou pela CLI.
+Projeto Supabase: `https://fuvlgvbystkvdxolgfmh.supabase.co`. A URL e a chave publicável já estão configuradas no workflow de build do site. Chaves publicáveis são destinadas ao navegador; não use uma chave `secret` ou `service_role` nessa configuração.
+
+1. No projeto acima, aplique `supabase/migrations/20261004000000_election_results.sql` pelo SQL Editor ou pela CLI.
 2. Crie um valor secreto forte para `CRON_SECRET` e configure-o na Edge Function:
 
    ```sh
@@ -63,8 +65,7 @@ Quando configurado, um Supabase Edge Function busca e valida a resposta assinada
    );
    ```
 
-4. Em **Settings → Secrets and variables → Actions → Variables** do GitHub, crie `VITE_SUPABASE_URL` com a URL do projeto e `VITE_SUPABASE_PUBLISHABLE_KEY` com a chave publicável do projeto. São valores públicos usados pelo navegador; nunca coloque `service_role`, uma secret key ou `CRON_SECRET` nessas variáveis.
-5. Faça um deploy do site uma vez para ativar a integração. Depois disso, o job agendado atualiza os dados no Supabase sem novos deploys do GitHub Pages.
+4. Faça um deploy do site para publicar a configuração Supabase. Depois disso, o job agendado atualiza os dados no Supabase sem novos deploys do GitHub Pages.
 
 Sem essas variáveis, a aplicação continua usando o arquivo estático `public/election-results.json`. O endpoint oficial do TSE não pode ser consultado diretamente pelo navegador por causa de CORS.
 
