@@ -69,7 +69,13 @@ export const getElectionSnapshot = (
 export const loadElectionSnapshot = async (
   signal?: AbortSignal,
 ): Promise<NormalizedElection> => {
-  const response = await fetch(`${import.meta.env.BASE_URL}election-results.json`, {
+  const snapshotUrl = new URL(
+    `${import.meta.env.BASE_URL}election-results.json`,
+    window.location.origin,
+  )
+  snapshotUrl.searchParams.set('_', Date.now().toString())
+
+  const response = await fetch(snapshotUrl, {
     cache: 'no-store',
     signal,
   })

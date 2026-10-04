@@ -31,7 +31,16 @@ const parseTseNumber = (value, field) => {
   return parsed
 }
 
-const response = await fetch(resultsUrl, { cache: 'no-store' })
+const requestUrl = new URL(resultsUrl)
+requestUrl.searchParams.set('_', Date.now().toString())
+
+const response = await fetch(requestUrl, {
+  cache: 'no-store',
+  headers: {
+    'Cache-Control': 'no-cache, no-store, max-age=0',
+    Pragma: 'no-cache',
+  },
+})
 
 if (!response.ok) {
   throw new Error(`O TSE respondeu com HTTP ${response.status} ao consultar os resultados.`)
