@@ -27,7 +27,7 @@ const featuredCandidateClass = new Map([
   ['FLAVIO BOLSONARO', 'candidate-featured-flavio'],
 ])
 
-const formatNumber = (value: number) => value.toLocaleString('pt-BR')
+const formatNumber = (value: number) => Math.round(value).toLocaleString('pt-BR')
 const formatPercent = (value: number) =>
   `${value.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
