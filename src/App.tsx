@@ -303,7 +303,7 @@ function App() {
     let requestInProgress = false
 
     const refreshResults = async () => {
-      if (requestInProgress) return
+      if (requestInProgress || document.hidden) return
       requestInProgress = true
 
       try {
@@ -320,12 +320,18 @@ function App() {
       }
     }
 
+    const refreshWhenVisible = () => {
+      if (!document.hidden) void refreshResults()
+    }
+
     void refreshResults()
-    const timer = window.setInterval(refreshResults, 60_000)
+    const timer = window.setInterval(refreshResults, 15_000)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
 
     return () => {
       controller.abort()
       window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
     }
   }, [retryToken])
 
