@@ -16,11 +16,6 @@ import {
 } from './data/electionData'
 import { getElectionSnapshot, loadElectionSnapshot } from './services/electionService'
 
-const featuredCandidateOrder = new Map([
-  ['RENAN SANTOS', 0],
-  ['LULA', 1],
-  ['FLAVIO BOLSONARO', 2],
-])
 const featuredCandidateClass = new Map([
   ['RENAN SANTOS', 'candidate-featured-renan'],
   ['LULA', 'candidate-featured-lula'],
@@ -346,23 +341,19 @@ function App() {
     return () => window.removeEventListener('hashchange', updatePage)
   }, [])
 
+  const tallyComplete = election.dataAvailable && election.apuracaoPercent >= 100
   const statusText =
     status === 'loading'
       ? 'Carregando resultados'
+      : tallyComplete
+        ? 'Apuração concluída. Resultado final do 1º turno.'
       : election.dataAvailable
         ? 'Dados oficiais em atualização'
         : 'Resultados ainda não disponíveis'
 
-  const displayedCandidates = [...election.candidates].sort((a, b) => {
-    const aOrder = featuredCandidateOrder.get(a.name.toLocaleUpperCase('pt-BR'))
-    const bOrder = featuredCandidateOrder.get(b.name.toLocaleUpperCase('pt-BR'))
-
-    if (aOrder !== undefined || bOrder !== undefined) {
-      return (aOrder ?? Number.MAX_SAFE_INTEGER) - (bOrder ?? Number.MAX_SAFE_INTEGER)
-    }
-
-    return 0
-  })
+  const displayedCandidates = [...election.candidates].sort(
+    (a, b) => b.votes - a.votes || a.position - b.position,
+  )
 
   const retryLoad = () => {
     setStatus('loading')
@@ -420,16 +411,24 @@ function App() {
                 <span className="status-label">Status da apuração</span>
                 <span
                   className={`status-badge ${
-                    status === 'error' ? 'idle' : election.dataAvailable ? 'live' : 'idle'
+                    status === 'error'
+                      ? 'idle'
+                      : tallyComplete
+                        ? 'complete'
+                        : election.dataAvailable
+                          ? 'live'
+                          : 'idle'
                   }`}
                 >
                   {status === 'loading'
                     ? 'CARREGANDO'
                     : status === 'error'
                       ? 'ERRO'
-                      : election.dataAvailable
-                      ? 'AO VIVO'
-                      : 'AGUARDANDO'}
+                      : tallyComplete
+                        ? 'CONCLUÍDA'
+                        : election.dataAvailable
+                          ? 'AO VIVO'
+                          : 'AGUARDANDO'}
                 </span>
               </div>
 
@@ -475,6 +474,50 @@ function App() {
           </div>
         </section>
 
+        {tallyComplete && election.leader && (
+          <motion.section
+            className="final-result"
+            aria-labelledby="final-result-title"
+            aria-live="polite"
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: 'easeOut' }}
+          >
+            <div className="final-result-copy">
+              <span className="final-result-kicker">
+                <span aria-hidden="true">✦</span>
+                1º turno · apuração concluída
+              </span>
+              <h2 id="final-result-title">Placar final</h2>
+              <p>O resultado oficial da votação, seção por seção.</p>
+              <div className="final-leader">
+                <span className="final-leader-label">Mais votado no 1º turno</span>
+                <strong>{election.leader.name}</strong>
+                <span>{election.leader.party}</span>
+              </div>
+            </div>
+            <div className="final-result-score">
+              <span className="final-result-percent">{formatPercent(election.leader.percentage)}</span>
+              <span className="final-result-votes">
+                {formatNumber(election.leader.votes)} votos
+              </span>
+              <div
+                className="final-progress"
+                role="progressbar"
+                aria-label="Apuração das seções"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={100}
+              >
+                <span />
+              </div>
+              <span className="final-progress-label">
+                100% das seções · {formatNumber(election.sectionsTotalized)} totalizadas
+              </span>
+            </div>
+          </motion.section>
+        )}
+
         <a className="timelapse-entry" href="#/timelapse">
           <span className="timelapse-entry-copy">
             <span className="section-kicker">Explore a apuração</span>
@@ -488,14 +531,18 @@ function App() {
           <div className="section-head">
             <div>
               <span className="section-kicker">Resultado oficial</span>
-              <h2 id="leaderboard-title">Placar do 1º turno</h2>
+              <h2 id="leaderboard-title">
+                {tallyComplete ? 'Resultado final do 1º turno' : 'Placar do 1º turno'}
+              </h2>
             </div>
-            <div className="summary-pill">
-              {election.leader
-                ? `${election.leader.name} lidera`
-                : election.dataAvailable
-                  ? 'Sem classificação disponível'
-                  : 'Aguardando apuração'}
+            <div className={`summary-pill${tallyComplete ? ' summary-pill-complete' : ''}`}>
+              {tallyComplete
+                ? 'Apuração concluída'
+                : election.leader
+                  ? `${election.leader.name} lidera`
+                  : election.dataAvailable
+                    ? 'Sem classificação disponível'
+                    : 'Aguardando apuração'}
             </div>
           </div>
 
@@ -508,13 +555,12 @@ function App() {
             <div className="candidate-list" aria-label="Lista de candidatos com votos e percentuais">
               {displayedCandidates.map((candidate, index) => {
                 const width = election.dataAvailable ? Math.max(candidate.percentage, 4) : 0
-                const candidateName = candidate.name.toLocaleUpperCase('pt-BR')
-                const featuredClass = featuredCandidateClass.get(candidateName)
+                const isLeader = election.leader?.name === candidate.name
 
                 return (
                   <motion.article
                     key={candidate.name}
-                    className={`candidate-row ${featuredClass ?? ''}`}
+                    className={`candidate-row ${isLeader ? 'candidate-row-leader' : ''}`}
                     initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.18 }}
