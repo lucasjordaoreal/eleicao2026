@@ -69,39 +69,6 @@ export const getElectionSnapshot = (
 export const loadElectionSnapshot = async (
   signal?: AbortSignal,
 ): Promise<NormalizedElection> => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-
-  if (Boolean(supabaseUrl) !== Boolean(supabasePublishableKey)) {
-    throw new Error('A configuração do Supabase está incompleta.')
-  }
-
-  if (supabaseUrl && supabasePublishableKey) {
-    const resultsUrl = new URL('/rest/v1/election_results', supabaseUrl)
-    resultsUrl.searchParams.set('select', 'snapshot')
-    resultsUrl.searchParams.set('singleton', 'eq.true')
-
-    const response = await fetch(resultsUrl, {
-      cache: 'no-store',
-      headers: {
-        apikey: supabasePublishableKey,
-      },
-      signal,
-    })
-
-    if (!response.ok) {
-      throw new Error(`Não foi possível carregar os resultados do Supabase (${response.status}).`)
-    }
-
-    const rows: unknown = await response.json()
-
-    if (!Array.isArray(rows) || rows.length !== 1 || !isElectionSnapshot(rows[0]?.snapshot)) {
-      throw new Error('O Supabase ainda não contém um snapshot de resultados válido.')
-    }
-
-    return getElectionSnapshot(rows[0].snapshot)
-  }
-
   const snapshotUrl = new URL(
     `${import.meta.env.BASE_URL}election-results.json`,
     window.location.origin,

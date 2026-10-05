@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: ["main"]
+  schedule:
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -32,9 +34,6 @@ jobs:
       - name: Fetch official election results
         run: npm run update:election-data
       - name: Build
-        env:
-          VITE_SUPABASE_URL: https://fuvlgvbystkvdxolgfmh.supabase.co
-          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_onPYfPAENNYDXQZjR947QA_5S81J9L4
         run: npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

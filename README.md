@@ -14,59 +14,8 @@ npm run dev
 
 ## Publicação
 
-O workflow em `.github/workflows/deploy.yml` compila e publica o site no GitHub Pages quando há push para `main` ou execução manual. Com o Supabase configurado, o site não precisa de deploy para receber novos resultados: um job do Supabase atualiza o snapshot a cada minuto, e a página o consulta a cada cinco segundos enquanto estiver aberta ou ao voltar para a aba.
+O workflow em `.github/workflows/deploy.yml` compila e publica o site no GitHub Pages quando há push para `main`. Ele também busca e publica um novo snapshot oficial a cada cinco minutos. A página recarrega o snapshot publicado a cada cinco segundos enquanto estiver aberta e busca novamente assim que a aba volta a ficar visível.
 
-### Atualização sem redeploy do site (Supabase)
-
-Quando configurado, um Supabase Edge Function busca e valida a resposta assinada do TSE uma vez por minuto, salva o snapshot no banco e a página consulta esse snapshot sem precisar republicar o site. A atualização ainda depende do intervalo em que o TSE publica novos dados.
-
-Projeto Supabase: `https://fuvlgvbystkvdxolgfmh.supabase.co`. A URL e a chave publicável já estão configuradas no workflow de build do site. Chaves publicáveis são destinadas ao navegador; não use uma chave `secret` ou `service_role` nessa configuração.
-
-1. No projeto acima, aplique `supabase/migrations/20261004000000_election_results.sql` pelo SQL Editor ou pela CLI.
-2. Crie um valor secreto forte para `CRON_SECRET` e configure-o na Edge Function:
-
-   ```sh
-   supabase secrets set CRON_SECRET=seu-segredo-aleatorio
-   supabase functions deploy refresh-election-results
-   ```
-
-3. No SQL Editor do Supabase, habilite `pg_cron`, `pg_net` e o Vault e guarde a URL do projeto, a chave publicável e o mesmo segredo:
-
-   ```sql
-   create extension if not exists pg_cron;
-   create extension if not exists pg_net;
-   create extension if not exists supabase_vault with schema vault;
-
-   select vault.create_secret('https://SEU-PROJETO.supabase.co', 'election_project_url');
-   select vault.create_secret('SUA-CHAVE-PUBLICAVEL', 'election_publishable_key');
-   select vault.create_secret('SEU-CRON_SECRET', 'election_cron_secret');
-   ```
-
-   Em seguida, agende a atualização:
-
-   ```sql
-   select cron.schedule(
-     'refresh-election-results',
-     '* * * * *',
-     $$
-     select net.http_post(
-       url := (select decrypted_secret from vault.decrypted_secrets where name = 'election_project_url')
-              || '/functions/v1/refresh-election-results',
-       headers := jsonb_build_object(
-         'Content-Type', 'application/json',
-         'apikey',
-         (select decrypted_secret from vault.decrypted_secrets where name = 'election_publishable_key'),
-         'x-cron-secret',
-         (select decrypted_secret from vault.decrypted_secrets where name = 'election_cron_secret')
-       ),
-       body := '{}'::jsonb
-     );
-     $$
-   );
-   ```
-
-4. Faça um deploy do site para publicar a configuração Supabase. Depois disso, o job agendado atualiza os dados no Supabase sem novos deploys do GitHub Pages.
-
-Sem essas variáveis, a aplicação continua usando o arquivo estático `public/election-results.json`. O endpoint oficial do TSE não pode ser consultado diretamente pelo navegador por causa de CORS.
+O navegador não consulta o TSE diretamente porque o endpoint oficial não permite requisições CORS de outros sites. Por isso, a atualização depende do workflow agendado do GitHub Actions e pode atrasar se o Actions estiver indisponível ou atrasar a execução.
 
 No repositório, configure **Settings → Pages → Build and deployment → Source → GitHub Actions**. Para este projeto, o caminho do Pages está configurado como `/eleicao2026/`.

@@ -475,20 +475,6 @@ function App() {
           </div>
         </section>
 
-        <aside
-          className="ad-slot"
-          data-ad-slot="leaderboard-top"
-          aria-label="Anúncio fictício de demonstração"
-        >
-          <span className="ad-demo-art" aria-hidden="true">AD</span>
-          <span className="ad-demo-copy">
-            <span className="ad-demo-label">Publicidade · demonstração</span>
-            <strong>Espaço para a sua marca</strong>
-            <span>Anúncio fictício — aguardando integração com uma rede de anúncios.</span>
-          </span>
-          <span className="ad-demo-cta" aria-hidden="true">Exemplo</span>
-        </aside>
-
         <a className="timelapse-entry" href="#/timelapse">
           <span className="timelapse-entry-copy">
             <span className="section-kicker">Explore a apuração</span>
@@ -603,20 +589,6 @@ function App() {
             <p>Votos nominais computados pelo TSE.</p>
           </article>
         </section>
-
-        <aside
-          className="ad-slot"
-          data-ad-slot="results-bottom"
-          aria-label="Anúncio fictício de demonstração"
-        >
-          <span className="ad-demo-art" aria-hidden="true">AD</span>
-          <span className="ad-demo-copy">
-            <span className="ad-demo-label">Publicidade · demonstração</span>
-            <strong>Seu próximo anúncio pode aparecer aqui</strong>
-            <span>Conteúdo de exemplo. Nenhuma publicidade real está sendo veiculada.</span>
-          </span>
-          <span className="ad-demo-cta" aria-hidden="true">Exemplo</span>
-        </aside>
 
         <section className="source-panel" aria-labelledby="source-title">
           <div>
